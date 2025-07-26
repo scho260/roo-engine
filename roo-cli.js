@@ -307,23 +307,64 @@ function createClient(config) {
   }
 }
 
-// Send message to AI with codebase context
-async function sendMessage(config, prompt, codebasePath = null) {
-  const client = createClient(config);
-  
-  // Get codebase context if available
-  const codebaseContext = await getCodebaseContext(codebasePath || config.codebasePath);
-  
-  // Build the full prompt with context
-  let fullPrompt = prompt;
-  if (codebaseContext) {
-    fullPrompt = `You are an AI assistant helping with a codebase. Here is the context about the codebase:
+// Get persona-specific prompt
+function getPersonaPrompt(persona, codebaseContext, userPrompt) {
+  const basePrompt = codebaseContext ? 
+    `You are an AI assistant helping with a codebase. Here is the context about the codebase:
 
 ${codebaseContext}
 
 Now, please answer this question about the codebase:
 
-${prompt}
+${userPrompt}` : userPrompt;
+
+  switch (persona) {
+    case 'salesperson':
+      return `${basePrompt}
+
+IMPORTANT: Respond like a professional salesperson trying to sell this product to a potential customer:
+1. Focus on business value, benefits, and ROI
+2. Use persuasive, enthusiastic language
+3. Highlight key features and competitive advantages
+4. Address potential customer pain points
+5. Include specific benefits and use cases
+6. Be conversational and engaging
+7. Reference specific features from the codebase when relevant
+8. Avoid overly technical jargon unless explaining benefits
+
+Make it sound like you're genuinely excited about this product and its value to the customer.`;
+
+    case 'executive':
+      return `${basePrompt}
+
+IMPORTANT: Respond like a business executive presenting to stakeholders:
+1. Focus on strategic value and business impact
+2. Use high-level, strategic language
+3. Emphasize ROI, market position, and competitive advantages
+4. Address business challenges and solutions
+5. Include market opportunities and growth potential
+6. Be confident and authoritative
+7. Reference business metrics and outcomes when possible
+
+Present this as a strategic business opportunity.`;
+
+    case 'developer':
+      return `${basePrompt}
+
+IMPORTANT: Respond like a senior developer explaining to another developer:
+1. Focus on technical architecture and implementation details
+2. Use technical terminology and code examples
+3. Explain design patterns, best practices, and technical decisions
+4. Include code snippets and technical explanations
+5. Address technical challenges and solutions
+6. Be precise and technically accurate
+7. Reference specific code patterns and implementations
+
+Provide detailed technical insights and code-level explanations.`;
+
+    case 'technical':
+    default:
+      return `${basePrompt}
 
 IMPORTANT: When answering questions about the codebase:
 1. Reference specific code snippets and file names from the provided context
@@ -334,6 +375,17 @@ IMPORTANT: When answering questions about the codebase:
 
 Please provide detailed, helpful answers about the code structure, functionality, and include relevant code examples from the actual files.`;
   }
+}
+
+// Send message to AI with codebase context
+async function sendMessage(config, prompt, codebasePath = null, persona = 'technical') {
+  const client = createClient(config);
+  
+  // Get codebase context if available
+  const codebaseContext = await getCodebaseContext(codebasePath || config.codebasePath);
+  
+  // Build the full prompt with persona-specific instructions
+  const fullPrompt = getPersonaPrompt(persona, codebaseContext, prompt);
   
   try {
     if (config.provider === 'anthropic') {
@@ -366,10 +418,17 @@ async function main() {
   if (args.length === 0) {
     console.log('🤖 Roo CLI - Standalone AI Assistant\n');
     console.log('Usage:');
-    console.log('  node roo-cli.js "your prompt"                    - Send a prompt to AI');
-    console.log('  node roo-cli.js --codebase /path/to/code "prompt" - Ask about specific codebase');
-    console.log('  node roo-cli.js --setup                          - Configure API keys');
-    console.log('  node roo-cli.js --config                         - Show current config');
+    console.log('  node roo-cli.js "your prompt"                                    - Send a prompt to AI');
+    console.log('  node roo-cli.js --codebase /path/to/code "prompt"                - Ask about specific codebase');
+    console.log('  node roo-cli.js --persona salesperson "prompt"                   - Respond as a salesperson');
+    console.log('  node roo-cli.js --codebase /path/to/code --persona salesperson "prompt" - Sales pitch about codebase');
+    console.log('  node roo-cli.js --setup                                          - Configure API keys');
+    console.log('  node roo-cli.js --config                                         - Show current config');
+    console.log('\nAvailable personas:');
+    console.log('  salesperson  - Respond like a salesperson selling the product');
+    console.log('  technical    - Respond with technical details (default)');
+    console.log('  executive    - Respond like a business executive');
+    console.log('  developer    - Respond like a developer explaining to another dev');
     return;
   }
   
@@ -385,19 +444,36 @@ async function main() {
     return;
   }
   
-  // Handle --codebase flag
+  // Handle flags
   let codebasePath = null;
+  let persona = 'technical';
   let prompt = '';
+  let i = 0;
   
-  if (args[0] === '--codebase') {
-    if (args.length < 3) {
-      console.log('❌ Usage: node roo-cli.js --codebase /path/to/code "your prompt"');
-      return;
+  while (i < args.length) {
+    if (args[i] === '--codebase') {
+      if (i + 1 >= args.length) {
+        console.log('❌ Usage: node roo-cli.js --codebase /path/to/code "your prompt"');
+        return;
+      }
+      codebasePath = args[i + 1];
+      i += 2;
+    } else if (args[i] === '--persona') {
+      if (i + 1 >= args.length) {
+        console.log('❌ Usage: node roo-cli.js --persona [salesperson|technical|executive|developer] "your prompt"');
+        return;
+      }
+      persona = args[i + 1];
+      i += 2;
+    } else {
+      prompt = args.slice(i).join(' ');
+      break;
     }
-    codebasePath = args[1];
-    prompt = args.slice(2).join(' ');
-  } else {
-    prompt = args.join(' ');
+  }
+  
+  if (!prompt) {
+    console.log('❌ No prompt provided. Usage: node roo-cli.js "your prompt"');
+    return;
   }
   
   const config = await loadConfig();
@@ -412,13 +488,12 @@ async function main() {
   
   if (codebasePath) {
     console.log(`🤖 Analyzing codebase: ${codebasePath}`);
-    console.log(`📡 Sending to ${provider} (${model})...\n`);
-  } else {
-    console.log(`🤖 Sending to ${provider} (${model})...\n`);
   }
+  console.log(`🎭 Persona: ${persona}`);
+  console.log(`📡 Sending to ${provider} (${model})...\n`);
   
   try {
-    const response = await sendMessage(config, prompt, codebasePath);
+    const response = await sendMessage(config, prompt, codebasePath, persona);
     console.log('AI Response:');
     console.log(response);
   } catch (error) {
