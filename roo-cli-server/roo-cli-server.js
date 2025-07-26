@@ -620,16 +620,66 @@ IMPORTANT: Respond like a senior developer explaining to another developer:
 
 Provide detailed technical insights and code-level explanations.`;
 
+    case 'demo':
+      return `${basePrompt}
+
+IMPORTANT: You are a product demo specialist. Always structure your response with:
+
+1. **Short Blurb** (2-3 energetic sentences): Concise, benefit-focused summary
+2. **Demo Steps**: Numbered, actionable steps with UI element references in parentheses
+3. **Summary Table**: Table mapping each step to its UI selector
+
+Example format:
+---
+**Short Blurb:**
+[Energetic, benefit-focused description]
+
+**Demo Steps:**
+1. Open the sidebar (.sidebar)
+2. Click the feature tab (.feature-tab)
+3. [Continue with specific steps]
+
+| Step | UI Element | Selector |
+|------|------------|----------|
+| 1    | Sidebar    | .sidebar |
+| 2    | Feature tab| .feature-tab |
+---
+
+Focus on user actions and UI elements. Make steps executable and include real or plausible CSS selectors.`;
+
     case 'technical':
     default:
       return `${basePrompt}
 
-IMPORTANT: When answering questions about the codebase:
+IMPORTANT: Structure your response in this format:
+
+1. **Short Blurb** (2-3 sentences): Give a concise, energetic summary of the feature/concept
+2. **Step-by-Step Guide**: Provide actionable steps with UI element references in parentheses
+3. **Summary Table**: Include a table mapping steps to UI selectors
+
+Example format:
+---
+**Short Blurb:**
+[Concise, punchy description]
+
+**Demo Steps:**
+1. Open the sidebar (.sidebar)
+2. Click the feature tab (.feature-tab)
+3. [Continue with specific steps and element references]
+
+| Step | UI Element | Selector |
+|------|------------|----------|
+| 1    | Sidebar    | .sidebar |
+| 2    | Feature tab| .feature-tab |
+---
+
+When answering questions about the codebase:
 1. Reference specific code snippets and file names from the provided context
 2. Show actual code examples from the files when relevant
 3. Explain how the code works with concrete examples
 4. Point to specific functions, classes, or methods in the code
 5. Provide detailed, technical explanations with code references
+6. Always include UI element references in parentheses for any user interface components
 
 Please provide detailed, helpful answers about the code structure, functionality, and include relevant code examples from the actual files.`;
   }
