@@ -1,0 +1,30 @@
+{
+  "name": "roo-cli-server",
+  "version": "1.0.0",
+  "description": "Roo CLI Server with Codebase Indexing",
+  "main": "roo-cli-server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node roo-cli-server.js",
+    "dev": "node --watch roo-cli-server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "@anthropic-ai/sdk": "^0.18.0",
+    "openai": "^4.28.0",
+    "@qdrant/js-client-rest": "^1.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "roo",
+    "cli",
+    "ai",
+    "codebase",
+    "indexing",
+    "vector-search"
+  ],
+  "author": "Roo Code Team",
+  "license": "MIT"
+}
