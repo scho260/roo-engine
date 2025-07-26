@@ -1,0 +1,42 @@
+{
+	"name": "@roo-code/types",
+	"description": "Shared types for Roo Code.",
+	"version": "0.0.0",
+	"type": "module",
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"require": "./dist/index.cjs",
+			"types": "./dist/index.d.ts"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"lint": "eslint src --ext=ts --max-warnings=0",
+		"check-types": "tsc --noEmit",
+		"build": "tsc",
+		"clean": "rimraf .turbo dist"
+	},
+	"devDependencies": {
+		"@roo-code/config-eslint": "workspace:^",
+		"@roo-code/config-typescript": "workspace:^",
+		"@types/node": "20.x",
+		"typescript": "5.8.3",
+		"vitest": "^3.2.3",
+		"zod": "^3.25.61"
+	},
+	"homepage": "https://github.com/RooCodeInc/Roo-Code/tree/main/packages/types",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/RooCodeInc/Roo-Code.git"
+	},
+	"keywords": [
+		"types",
+		"roo-code"
+	]
+}
